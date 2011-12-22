@@ -23,9 +23,14 @@
 
 #include <string.h>
 #include <stdlib.h>
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "arduino.h"
+#endif
 
 extern "C" {
+   #if defined(ARDUINO) && ARDUINO < 100
    #include "wiring.h"
+   #endif
    #include <utility/EthernetUtil.h>
 }
 

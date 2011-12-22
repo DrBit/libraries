@@ -26,9 +26,13 @@
 
 #include <utility/socket.h>
 #include <utility/w5100.h>
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "arduino.h"
+#else
 extern "C" {
    #include "wiring.h"
 }
+#endif
 
 #define TXBUF_BASE      0x4000
 #define SMASK           0x07FF

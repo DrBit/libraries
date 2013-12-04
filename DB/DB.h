@@ -25,7 +25,7 @@
 
 struct DB_Header
 {
-  byte n_recs;
+  unsigned int n_recs;
   byte rec_size;
 };
 
@@ -49,7 +49,7 @@ class DB {
     boolean deleteRec(byte recno);	                // delete is a reserved word
     boolean insert(byte recno, const DB_Rec rec);
     void    append(DB_Rec rec);
-	byte   nRecs();
+    unsigned int   nRecs();
     DB_Header DB_head;
     byte DB_error;
   private:

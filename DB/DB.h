@@ -42,23 +42,23 @@ typedef byte* DB_Rec;
 
 class DB {
   public:
-    void    create(int head_ptr, byte recsize, int init_size);
-    void    open(int head_ptr);
-    boolean write(byte recno, const DB_Rec rec);
-    boolean read(byte recno, DB_Rec rec);
-    boolean deleteRec(byte recno);	                // delete is a reserved word
-    boolean insert(byte recno, const DB_Rec rec);
+    void    create(unsigned int head_ptr, byte recsize, unsigned int init_size);
+    void    open(unsigned int head_ptr);
+    boolean write(unsigned int recno, const DB_Rec rec);
+    boolean read(unsigned int recno, DB_Rec rec);
+    boolean deleteRec(unsigned int recno);	                // delete is a reserved word
+    boolean insert(unsigned int recno, const DB_Rec rec);
     void    append(DB_Rec rec);
     unsigned int   nRecs();
     DB_Header DB_head;
     byte DB_error;
   private:
-    int writeHead();
-    int readHead();
-    int EEPROM_dbWrite(int ee, const byte* p);
-    int EEPROM_dbRead(int ee, byte* p);
-    int DB_head_ptr;
-    int DB_tbl_ptr;
+    unsigned int writeHead();
+    unsigned int readHead();
+    unsigned int EEPROM_dbWrite(unsigned int ee, const byte* p);
+    unsigned int EEPROM_dbRead(unsigned int ee, byte* p);
+    unsigned int DB_head_ptr;
+    unsigned int DB_tbl_ptr;
 };
 
 extern DB db;

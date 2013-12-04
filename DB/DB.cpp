@@ -27,37 +27,37 @@
 
 /**************************************************/
 // private functions
-int DB::writeHead()
+unsigned int DB::writeHead()
 {
     byte * p = (byte*)(void*)&DB_head;
-	int ee = DB_head_ptr;
-    int i;
-    for (i = 0; i < (int)sizeof(DB_head); i++)
+	  unsigned int ee = DB_head_ptr;
+    unsigned int i;
+    for (i = 0; i < (unsigned int)sizeof(DB_head); i++)
       EEPROM.write(ee++, *p++);
     return i;
 }
 
-int DB::readHead()
+unsigned int DB::readHead()
 {
     byte* p = (byte*)(void*)&DB_head;
-	int ee = DB_head_ptr;
-    int i;
-    for (i = 0; i < (int)sizeof(DB_head); i++)
+	unsigned int ee = DB_head_ptr;
+    unsigned int i;
+    for (i = 0; i < (unsigned int)sizeof(DB_head); i++)
       *p++ = EEPROM.read(ee++);
     return i;
 }
 
-int DB::EEPROM_dbWrite(int ee, const byte* p)
+unsigned int DB::EEPROM_dbWrite(unsigned int ee, const byte* p)
 {
-    int i;
+    unsigned int i;
     for (i = 0; i < DB_head.rec_size; i++)
       EEPROM.write(ee++, *p++);
     return i;
 }
 
-int DB::EEPROM_dbRead(int ee, byte* p)
+unsigned int DB::EEPROM_dbRead(unsigned int ee, byte* p)
 {  
-    int i;
+    unsigned int i;
     for (i = 0; i < DB_head.rec_size; i++)
       *p++ = EEPROM.read(ee++);
     return i;
@@ -66,7 +66,7 @@ int DB::EEPROM_dbRead(int ee, byte* p)
 /**************************************************/
 // public functions
 
-void DB::create(int head_ptr, byte recsize, int init_size)
+void DB::create(unsigned int head_ptr, byte recsize, unsigned int init_size)
 {
   DB_head_ptr = head_ptr;
   DB_head.n_recs   = init_size;
@@ -76,7 +76,7 @@ void DB::create(int head_ptr, byte recsize, int init_size)
 
 
 
-void DB::open(int head_ptr)
+void DB::open(unsigned int head_ptr)
 {
   DB_head_ptr = head_ptr;
   DB_tbl_ptr  = head_ptr + DB_HEAD_SIZE;
@@ -85,7 +85,7 @@ void DB::open(int head_ptr)
 //other operations commit DB_head edits to EEPROM so no need for a DB_close
 
 
-boolean DB::write(byte recno, const DB_Rec rec)
+boolean DB::write(unsigned int recno, const DB_Rec rec)
 {
   DB_error = DB_OK;
   if (recno>0 && recno<=DB_head.n_recs+1)
@@ -96,7 +96,7 @@ boolean DB::write(byte recno, const DB_Rec rec)
 }
 
 
-boolean DB::read(byte recno, DB_Rec rec)
+boolean DB::read(unsigned int recno, DB_Rec rec)
 {
   DB_error = DB_OK;
   if (recno>0 && recno<=DB_head.n_recs)
@@ -107,7 +107,7 @@ boolean DB::read(byte recno, DB_Rec rec)
 }
 
 
-boolean DB::deleteRec(byte recno)
+boolean DB::deleteRec(unsigned int recno)
 {
   DB_error = DB_OK;
   if (recno<0 || recno>DB_head.n_recs)
@@ -116,7 +116,7 @@ boolean DB::deleteRec(byte recno)
     return false;
   }
   DB_Rec rec = (byte*)malloc(DB_head.rec_size);
-  for (int i=recno+1; i<=DB_head.n_recs; i++)
+  for (unsigned int i=recno+1; i<=DB_head.n_recs; i++)
   {
     read(i,rec);
     write(i-1,rec);
@@ -128,7 +128,7 @@ boolean DB::deleteRec(byte recno)
 }
 
 
-boolean DB::insert(byte recno, DB_Rec rec)
+boolean DB::insert(unsigned int recno, DB_Rec rec)
 {
   DB_error = DB_OK;
   if (recno<0 || recno>DB_head.n_recs)
@@ -137,7 +137,7 @@ boolean DB::insert(byte recno, DB_Rec rec)
     return false;
   }
   DB_Rec buf = (byte*)malloc(DB_head.rec_size);
-  for (int i=DB_head.n_recs; i>=recno; i--)
+  for (unsigned int i=DB_head.n_recs; i>=recno; i--)
   {
     read(i,buf);
     write(i+1,buf);
@@ -157,7 +157,7 @@ void DB::append(DB_Rec rec)
   EEPROM.write(DB_head_ptr,DB_head.n_recs);
 }
 
-byte DB::nRecs()
+unsigned int DB::nRecs()
 {
   return DB_head.n_recs;
 }

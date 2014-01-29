@@ -1,6 +1,8 @@
 This is a fork of PJRC's [PS2Keyboard library](http://www.pjrc.com/teensy/td_libs_PS2Keyboard.html) (v2.3).
 It was made to work with the Arduino Leonardo via some additional pin definitions.
 
+It has also some additions to work with a custom software I designed. Backward compatibility is not asured.
+
 Specifically, in PS2Keyboard.h, the following was added:
 
 ```

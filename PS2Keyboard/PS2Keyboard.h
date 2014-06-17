@@ -72,6 +72,7 @@ class PS2Keyboard {
 
 
     static bool key_released_available();
+    static bool key_pressed_available();
 
     static uint16_t read_released();
 

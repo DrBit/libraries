@@ -46,9 +46,10 @@
 
 #include "PS2Keyboard.h"
 
-#define BUFFER_SIZE 25			// Number of scancodes that can be recorded
-static volatile uint16_t buffer[BUFFER_SIZE];	// Buffer for the scancodes
-static volatile uint16_t pressed[BUFFER_SIZE];	// Buffer for the pressed scancodes
+#define BUFFER_SIZE_INT 25			// Number of scancodes that can be pre-recorded
+#define BUFFER_SIZE_PRESSED 15			// Number of scancodes that can be pressed at a time
+static volatile uint16_t buffer[BUFFER_SIZE_INT];	// Buffer for the scancodes
+static volatile uint16_t pressed[BUFFER_SIZE_PRESSED];	// Buffer for the pressed scancodes
 static volatile uint8_t head, tail;			// Head number of received scancodes, tail is last readed scancode
 static uint8_t DataPin;
 static uint16_t CharBuffer=0;
@@ -77,7 +78,7 @@ void ps2interrupt(void)
 	bitcount++;
 	if (bitcount == 11) {
 		uint8_t i = head + 1;
-		if (i >= BUFFER_SIZE) i = 0;
+		if (i >= BUFFER_SIZE_INT) i = 0;
 		if (i != tail) {
 			buffer[i] = incoming;
 			head = i;
@@ -94,7 +95,7 @@ static inline uint8_t get_scan_code(void)
 	i = tail;
 	if (i == head) return 0;
 	i++;
-	if (i >= BUFFER_SIZE) i = 0;
+	if (i >= BUFFER_SIZE_INT) i = 0;
 	c = buffer[i];
 	tail = i;
 	return c;
@@ -154,7 +155,7 @@ static uint16_t get_iso8859_code(void)
 				state &= ~(BREAK | MODIFIER);
 				if (c) {
 					CharRelBuffer = c;
-					continue;
+					return c;
 				} 
 
 			} else {			// If is pressing a key (Modifiers)
@@ -186,17 +187,24 @@ static uint16_t get_iso8859_code(void)
 						c = s;
 				}
 				state &= ~(BREAK | MODIFIER);
-				if (c) return c;
+				if (c) {
+					CharBuffer = c;
+					return c;
+				}
 			}
 		}
 	}
 }
 
 bool PS2Keyboard::available() {
-	if (!key_released_available()) {
-		CharBuffer = get_iso8859_code();
-		if (CharBuffer) return true;
-	}
+	if ((CharBuffer) || (CharRelBuffer)) return true;		// Before reading a new one checlk if we have something on the buffer
+	get_iso8859_code();
+	if ((CharBuffer) || (CharRelBuffer)) return true;
+	return false;
+}
+
+bool PS2Keyboard::key_pressed_available() {
+	if (CharBuffer) return true;
 	return false;
 }
 
@@ -213,7 +221,7 @@ bool PS2Keyboard::add_buffer (uint16_t data) {
 		if (pressed[a] == data) {	// This happens when auto repeat is enabled
 			return true;			// We have a match so we dont have to continue
 		}else if (a == num_positions) {		// If we have reached the end of filled slots...
-			if (num_positions == BUFFER_SIZE) {		// We check if the buffers is full
+			if (num_positions == BUFFER_SIZE_PRESSED) {		// We check if the buffers is full
 				return false;		// BUFFER FULL!!!! we check only if we have a
 			}else{
 				pressed[a] = data;
@@ -267,11 +275,11 @@ uint16_t PS2Keyboard::remove_buffer (uint16_t data) {
 }
 
 uint8_t PS2Keyboard::positions_buffer () {	// returns the number of filled buffer slots
-    for (int a=0; a<BUFFER_SIZE; a++) {
+    for (int a=0; a<BUFFER_SIZE_PRESSED; a++) {
     	if (pressed[a] == '\0') {
     		return a;
-    	}else if (a == (BUFFER_SIZE -1)) {
-    		return BUFFER_SIZE;
+    	}else if (a == (BUFFER_SIZE_PRESSED -1)) {
+    		return BUFFER_SIZE_PRESSED;
     	}
     }
 }

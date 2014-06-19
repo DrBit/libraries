@@ -130,16 +130,17 @@ static uint16_t get_iso8859_code(void)
 			if (state & BREAK) {		// If state is realeasing a key
 				if (s == 0x12) {
 					state &= ~SHIFT_L;
+					c = s;
 				} else if (s == 0x59) {
 					state &= ~SHIFT_R;
+					c = s;
 				} else if (s == 0x11 && (state & MODIFIER)) {
 					state &= ~ALTGR;
+					c = s;
 				} else if (s == 0x14) {
 					state &= ~CNTRL;
-				}
-				// ALT & WIN keys could be added
-
-				if (state & CNTRL) {
+					c = s;
+				} else if (state & CNTRL) {
 					if (s < PS2_KEYMAP_SIZE)
 						c = s + (3*PS2_KEYMAP_SIZE);
 				} else if (state & ALTGR) {
@@ -161,19 +162,21 @@ static uint16_t get_iso8859_code(void)
 			} else {			// If is pressing a key (Modifiers)
 				if (s == 0x12) {
 					state |= SHIFT_L;
-					continue;
+					//continue;				// At this point skips everything and starts over at the begining of the while
+					c = s;
 				} else if (s == 0x59) {
 					state |= SHIFT_R;
-					continue;
+					//continue;
+					c = s;
 				} else if (s == 0x11 && (state & MODIFIER)) {
 					state |= ALTGR;
-					continue;
+					//continue;
+					c = s;
 				} else if (s == 0x14) {
 					state |= CNTRL;
-					continue;
-				}
-
-				if (state & CNTRL) {		// Final keycode (with or without modifier)
+					//continue;
+					c = s;
+				} else if (state & CNTRL) {		// Final keycode (with or without modifier)
 					if (s < PS2_KEYMAP_SIZE)
 						c = s + (3*PS2_KEYMAP_SIZE);
 				} else if (state & ALTGR) {
@@ -195,6 +198,13 @@ static uint16_t get_iso8859_code(void)
 		}
 	}
 }
+
+// recall error
+// Shift + A
+
+// release shift
+// keep A pressed
+
 
 bool PS2Keyboard::available() {
 	if ((CharBuffer) || (CharRelBuffer)) return true;		// Before reading a new one checlk if we have something on the buffer
@@ -253,15 +263,70 @@ uint16_t PS2Keyboard::remove_buffer (uint16_t data) {
 	uint16_t temp_result = 0;
 	boolean match = false;
 	unsigned int num_positions =  positions_buffer();
+	unsigned int i = num_positions-1;
+
+		Serial.print (i);
+		Serial.print (" - ");
+		Serial.print (pressed[i]);
+		Serial.print (" - ");
+		Serial.print (data);
+		Serial.print (" - ");
+		Serial.println ((data == 0x12) || (data == 0x59) || (data == 0x14) || (data == 0x11)) ;
+
+	if (num_positions == 0) {		// WE have reach the end and did not find the key, so its not in
+		return data;
+	}
+	// If shift or any other modifier is pressed then we will remove shift + everything after shift (if any)
+	if ((data == 0x12) || (data == 0x59) || (data == 0x14) || (data == 0x11)) {			// Shift L - SHIFT_R - CNTRL
+		// If the last one is not == to data -> remove it
+
+		if (data != pressed[i]) {		// If it is not already in the last positions...
+			// If we encounter on the way another special key we have to take care of it and keep it in the list
+			// We will cechk next in list and if ints not yet our the we will delete that instead anc move the actual to there
+			if ((pressed[i] == 0x12) || (pressed[i] == 0x59) || (pressed[i] == 0x14) || (pressed[i] == 0x11)) {
+				unsigned int t_i = i;
+				while ((pressed[i] == 0x12) || (pressed[i] == 0x59) || (pressed[i] == 0x14) || (pressed[i] == 0x11)) {
+					if (pressed[i] == data) {		// If it finally matches we quit 
+						CharRelBuffer = data; 
+						return -1;
+					}
+					if (t_i == 0) {		// WE have reach the end and did not find the key, so its not in
+						return data;
+					}
+					// fer un canvi del penultim per l'ultim
+					uint16_t last = pressed[i];
+					uint16_t penultimum = pressed[t_i-1];
+					pressed[t_i-1] = last;
+					pressed[i] = penultimum;
+					Serial.print ("Now last number is: ");
+					Serial.print (pressed[i]);
+					Serial.print (" - ");
+					Serial.println (pressed[i] != data);
+					t_i--;		// Next time one less
+				} 
+				// We have a normal number, we continue
+				CharRelBuffer = data; 
+				return -1;
+			}
+
+			//Keep doing it until we release all of them (Main loop will always check for available keys left)
+			CharRelBuffer = data; 					// Pre-record shift (or modifier) to be able to come back to here again next time
+													// If another key is inmediately released this will fail a better whay of doing shld be invented
+			temp_result = pressed[num_positions-1];	// Pre-record data (last only)
+			pressed[num_positions-1] = '\0';		// Delete last one
+			Serial.println ("Relased via special");
+			return temp_result;						// Send data to be released
+		}
+	}
 
 	for (int a = 0; a < num_positions; a++) {
 		if (pressed[a] == data) {
 			match = true;
-		}else if (pressed[a] == (data + PS2_KEYMAP_SIZE)) {
+		}else if ((pressed[a] == (data + PS2_KEYMAP_SIZE)) || (pressed[a] == (data - PS2_KEYMAP_SIZE))) {
 			match = true;
-		}else if (pressed[a] == (data + (2*PS2_KEYMAP_SIZE))) {
+		}else if ((pressed[a] == (data + (2*PS2_KEYMAP_SIZE))) || (pressed[a] == (data - (2*PS2_KEYMAP_SIZE)))) {
 			match = true;
-		}else if (pressed[a] == (data + (3*PS2_KEYMAP_SIZE))) {
+		}else if ((pressed[a] == (data + (3*PS2_KEYMAP_SIZE))) || (pressed[a] == (data - (3*PS2_KEYMAP_SIZE)))) {
 			match = true;
 		}
 
@@ -272,6 +337,7 @@ uint16_t PS2Keyboard::remove_buffer (uint16_t data) {
 			return temp_result;
 		}
 	}
+	return -1;
 }
 
 uint8_t PS2Keyboard::positions_buffer () {	// returns the number of filled buffer slots

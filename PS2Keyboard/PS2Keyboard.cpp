@@ -221,8 +221,12 @@ bool PS2Keyboard::key_pressed_available() {
 uint16_t PS2Keyboard::read() {
 	uint16_t result = CharBuffer;
 	CharBuffer = 0;
-	if (!add_buffer (result)) return '\0'; // Buffer FULL -> return '\0'
-	return result;
+	if (result) {
+		if (!add_buffer (result)) return '\0'; // Buffer FULL -> return '\0'
+		return result;
+	}else{
+		return '\0';
+	}
 }
 
 bool PS2Keyboard::add_buffer (uint16_t data) {

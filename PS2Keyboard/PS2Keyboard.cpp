@@ -265,13 +265,13 @@ uint16_t PS2Keyboard::remove_buffer (uint16_t data) {
 	unsigned int num_positions =  positions_buffer();
 	unsigned int i = num_positions-1;
 
-		Serial.print (i);
-		Serial.print (" - ");
-		Serial.print (pressed[i]);
-		Serial.print (" - ");
-		Serial.print (data);
-		Serial.print (" - ");
-		Serial.println ((data == 0x12) || (data == 0x59) || (data == 0x14) || (data == 0x11)) ;
+		//Serial.print (i);
+		//Serial.print (" - ");
+		//Serial.print (pressed[i]);
+		//Serial.print (" - ");
+		//Serial.print (data);
+		//Serial.print (" - ");
+		//Serial.println ((data == 0x12) || (data == 0x59) || (data == 0x14) || (data == 0x11)) ;
 
 	if (num_positions == 0) {		// WE have reach the end and did not find the key, so its not in
 		return data;
@@ -298,10 +298,10 @@ uint16_t PS2Keyboard::remove_buffer (uint16_t data) {
 					uint16_t penultimum = pressed[t_i-1];
 					pressed[t_i-1] = last;
 					pressed[i] = penultimum;
-					Serial.print ("Now last number is: ");
-					Serial.print (pressed[i]);
-					Serial.print (" - ");
-					Serial.println (pressed[i] != data);
+					//Serial.print ("Now last number is: ");
+					//Serial.print (pressed[i]);
+					//Serial.print (" - ");
+					//Serial.println (pressed[i] != data);
 					t_i--;		// Next time one less
 				} 
 				// We have a normal number, we continue
@@ -314,7 +314,7 @@ uint16_t PS2Keyboard::remove_buffer (uint16_t data) {
 													// If another key is inmediately released this will fail a better whay of doing shld be invented
 			temp_result = pressed[num_positions-1];	// Pre-record data (last only)
 			pressed[num_positions-1] = '\0';		// Delete last one
-			Serial.println ("Relased via special");
+			//Serial.println ("Relased via special");
 			return temp_result;						// Send data to be released
 		}
 	}
